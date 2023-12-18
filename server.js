@@ -2,7 +2,7 @@ const mongoEnv = require("./env/mongoEnv");
 const express = require("express");
 const session = require("express-session");
 const MongoDBstore = require("connect-mongodb-session")(session);
-// const csrf = require("csurf");
+const csrf = require("csurf");
 
 const path = require("path");
 const bodyParser = require("body-parser");
@@ -20,7 +20,7 @@ const store = new MongoDBstore({
 });
 
 let port = 3000;
-//const csrfProtection = csrf();
+const csrfProtection = csrf();
 app.set("view engine", "ejs");
 app.set("views", "view");
 app.use(
@@ -31,18 +31,19 @@ app.use(
     store: store,
   })
 );
-//app.use(csrfProtection);
+
 app.use(bodyParser.urlencoded({ extended: false }));
 //set cooki
-
+app.use(csrfProtection);
 app.use(express.static(path.join(__dirname, "public")));
 // app.use((req, res, next) => {
 //   console.log('Session Object:', req.session);
 //   next();
 // });
+
 app.use((req, res, next) => {
   res.locals.isLoggedIn = req.session.isLoggedIn;
- // res.locals.csrfToken = req.csrfToken();
+ res.locals.csrfToken = req.csrfToken();
   next();
 });
 app.use("/admin", adminRout);

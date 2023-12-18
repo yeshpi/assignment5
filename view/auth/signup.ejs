@@ -9,6 +9,7 @@
         <%- include('../includes/navigation.ejs')%>
             <main>
                 <form class="login-form" action="/signup" method="post">
+                    <input type="hidden" value="<%= csrfToken %>" name="_csrf">
                     <div class="form-control">
                         <label for="name">User Name</label>
                         <input type="text" name="name" id="name">
