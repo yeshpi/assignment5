@@ -2,6 +2,7 @@ const Product = require("../models/product");
 const Order = require("../models/order");
 const User = require("../models/users");
 
+
 exports.getProducts = (req, res, next) => {
  // console.log(req.session);
   if (req.session.isLoggedIn) {
@@ -14,22 +15,19 @@ exports.getProducts = (req, res, next) => {
         doctitle: "shop",
         path: "/products",
         isLoggedIn: req.session.isLoggedIn,
+        
       });
     })
     .catch((err) => console.log(err));
 };
 exports.getIndex = (req, res, next) => {
-  if (req.session.isLoggedIn) {
-    console.log(req.session.isLoggedIn);
-  }
-
+ 
   Product.find()
     .then((products) => {
       res.render("shop/index", {
         products: products,
         doctitle: "shop",
-        path: "/",
-        isLoggedIn: req.session.isLoggedIn,
+        path: "/",       
       });
     })
     .catch((err) => console.log(err));

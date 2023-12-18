@@ -4,9 +4,13 @@
 </head>
 
 <body>
+ 
+
        <%- include('../includes/navigation.ejs')%>
 
     <main>
+ 
+       
         <% if (products.length > 0) { %>     
             <div class="grid">
                 <% for (let product of products) { %>  
@@ -22,7 +26,9 @@
                             <p class="product__description"><%= product.description %></p>
                         </div>
                         <div class="card__actions">
+                            <%if(isLoggedIn) {%>
                             <%- include('../includes/add-to-cart.ejs',{product: product }) %>
+                            <%}%>
                         </div>
                     </article>
                 <%}%>

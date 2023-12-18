@@ -4,12 +4,13 @@ const rootDir = require("../util/path");
 const route = express.Router();
 
 const adminController=require('../controllers/admin');
+const isAuth=require('../middleware/is-auth');
 
-
-route.get("/add-product", adminController.getAddProducts);
-route.get("/products", adminController.getProducts);
-route.post("/add-product", adminController.postAddProucts);
-route.get("/edit-product/:productId", adminController.getEditProducts);
-route.post("/edit-product/", adminController.postEditProduct);
-route.post("/delete-product",adminController.postDeleteProducts)
+route.use("/",isAuth)
+route.get("/add-product", isAuth,adminController.getAddProducts);
+route.get("/products", isAuth,adminController.getProducts);
+route.post("/add-product", isAuth,adminController.postAddProucts);
+route.get("/edit-product/:productId",isAuth, adminController.getEditProducts);
+route.post("/edit-product/", isAuth,adminController.postEditProduct);
+route.post("/delete-product",isAuth,adminController.postDeleteProducts)
 module.exports = route;
