@@ -6,6 +6,9 @@
     <body>
         <%- include('../includes/navigation.ejs')%>
             <main>
+                <% if(userMessage.length>0){%>
+                    <div class="user-message user-message--error"><%=userMessage%></div>
+                    <%}%>
                 <form class="login-form" action="/login" method="post">
                     <input type="hidden" value="<%= csrfToken %>" name="_csrf">
                     <div class="form-control">

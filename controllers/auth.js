@@ -13,6 +13,7 @@ exports.getlogin = (req, res, next) => {
     doctitle: "login",
     path: "/login",
     isLoggedIn: req.session.isLoggedIn,
+    userMessage:req.flash('err')
    
   });
 };
@@ -31,12 +32,14 @@ exports.postlogin = (req, res, next) => {
  User.findOne({email:email}).then(async (user)=>{
   console.log(user);
   if(!user){
-  return  res.redirect('/signup')
+    req.flash('err',"email or passsword not found")
+  return  res.redirect('/login')
   }
 else{
     const check=await bcrypt.compare(password,user.password)
     if(!check){
  // if(user.password!==password){
+  req.flash('err',"email or passsword not found")
     return res.redirect('/login')
 
   }
@@ -106,6 +109,7 @@ exports.getSignup = (req, res, next) => {
     doctitle: "SingUp",
     path: "/signup",
     isLoggedIn: req.session.isLoggedIn,
+    userMessage:req.flash('err')
   });
 };
 exports.postSignup =async (req, res, next) => {
@@ -123,6 +127,7 @@ exports.postSignup =async (req, res, next) => {
       console.log(user);
       
       if(user){
+        req.flash('err','email account already registed ')
         return res.redirect('/signup')
       }
    const Newuser=new User({name:name,email:email,cart:{items:[]},password:passwordHashed})

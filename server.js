@@ -3,6 +3,8 @@ const express = require("express");
 const session = require("express-session");
 const MongoDBstore = require("connect-mongodb-session")(session);
 const csrf = require("csurf");
+const flash=require('connect-flash');
+
 
 const path = require("path");
 const bodyParser = require("body-parser");
@@ -35,6 +37,7 @@ app.use(
 app.use(bodyParser.urlencoded({ extended: false }));
 //set cooki
 app.use(csrfProtection);
+app.use(flash())
 app.use(express.static(path.join(__dirname, "public")));
 // app.use((req, res, next) => {
 //   console.log('Session Object:', req.session);
