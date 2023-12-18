@@ -92,7 +92,7 @@ else{
   //     res.status(500).send("Internal Server Error");
   //   });
 };
-exports.getSignout = (req, res, next) => {
+exports.postSignout = (req, res, next) => {
   req.session.destroy((err) => {
     if (err) {
       console.log(err);
