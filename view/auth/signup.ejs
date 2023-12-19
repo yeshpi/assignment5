@@ -9,27 +9,33 @@
         <%- include('../includes/navigation.ejs')%>
             <main>
 
-                 <% if(userMessage.length>0){%>
-                <div class="user-message user-message--error"><%=userMessage%></div>
-                <%}%>
-                <form class="login-form" action="/signup" method="post">
-                    <input type="hidden" value="<%= csrfToken %>" name="_csrf">
-                    <div class="form-control">
-                        <label for="name">User Name</label>
-                        <input type="text" name="name" id="name">
-                        <label for="email">E-mail</label>
-                        <input type="email" name="email" id="email">
+                <% if(userMessage.length>0){%>
+                    <div class="user-message user-message--error">
+                        <%=userMessage%>
                     </div>
-                    <div class="form-control">
-                        <label for="password">Password</label>
-                        <input type="password" name="password" id="password">
-                    </div>
-                    <div class="form-control">
-                        <label for="passwordComfirm">Confirm Password</label>
-                        <input type="password" name="passwordConfirm" id="passwordComfirm">
-                    </div>
-                    <button class="btn" type="submit">SignUp</button>
-                </form>
+                    <%}%>
+                        <form class="login-form" action="/signup" method="post" novalidate>
+                            <input type="hidden" value="<%= csrfToken %>" name="_csrf">
+                            <div class="form-control">
+                                <label for="name">User Name</label>
+                                <input type="text" class="<%= errorPath.includes('name')?'invalid':''%>"
+                                    value="<%= userData.name%>" name="name" id="name">
+                                <label for="email">E-mail</label>
+                                <input type="email" class="<%= errorPath.includes('email')?'invalid':''%>"
+                                    value="<%= userData.email%>" name="email" id="email">
+                            </div>
+                            <div class="form-control">
+                                <label for="password">Password</label>
+                                <input class="<%= errorPath.includes('password')?'invalid':''%>" type="password"
+                                    value="<%= userData.password%>" name="password" id="password">
+                            </div>
+                            <div class="form-control">
+                                <label for="passwordComfirm">Confirm Password</label>
+                                <input type="password" class="<%= errorPath.includes('passwordConfirm')?'invalid':''%>"
+                                    value="<%= userData.passwordConfirm %>" name="passwordConfirm" id="passwordComfirm">
+                            </div>
+                            <button class="btn" type="submit">SignUp</button>
+                        </form>
             </main>
 
-        <%- include('../includes/end.ejs')%>
+            <%- include('../includes/end.ejs')%>
