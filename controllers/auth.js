@@ -1,6 +1,9 @@
+const { password } = require("../env/mongoEnv");
 const Product = require("../models/product");
 const User = require("../models/users");
 const bcrypt=require('bcrypt');
+const crypto=require('crypto');
+
 
 
 exports.getlogin = (req, res, next) => {
@@ -137,3 +140,92 @@ exports.postSignup =async (req, res, next) => {
     })
     .catch((err) => console.log(err));
 };
+exports.getPasswordReset=(req,res,next)=>{
+  
+  res.render("auth/reset.ejs", {
+    doctitle: "password reset",
+    path: "/password",
+    isLoggedIn: req.session.isLoggedIn,
+    userMessage:req.flash('err')
+   
+  });
+ 
+
+}
+
+exports.postPasswordReset=async (req,res,next)=>{
+  const email=req.body.email
+   const user=await User.findOne({email:email})
+   const token=crypto.randomBytes(32).toString('hex')
+   console.log(email,user , token);
+   
+   
+   if(!user)
+   {
+     await req.flash('err',"email doest exit ")
+     return res.redirect('/reset')
+   }
+   else{
+    user.resetToken=token
+    
+    user.tokenExpiraionDate=Date.now() + 1*60*60*10000  //1hour      
+    
+    user.save().then((result)=>{
+      console.log('send email');      
+      //send email
+    console.log(result);
+
+    res.redirect('/')
+    
+    }).catch(err=>console.log(err));
+
+   }
+
+}
+
+exports.getPasswordChange= async (req,res,next)=>{
+const tokenId=req.params.tokenId
+const user=await User.findOne({resetToken:tokenId,tokenExpiraionDate:{$gt:Date.now()}})
+console.log(tokenId);
+console.log(user);
+
+if(user){
+  res.render('auth/new-password.ejs',{
+    doctitle: "password reset",
+    path: "/password",
+    userMessage:req.flash('err') , 
+    userId:user._id
+  })
+}
+else{
+  console.log('x');
+  
+  req.flash('err',"reset token expired or internal server error")
+  res.redirect('/reset')
+}
+}
+exports.postChangePassword= async (req,res,next)=>{
+  const userId=req.body.userId
+  const password = req.body.password;
+  const passwordConfirm = req.body.passwordConfirm;
+  const passwordHashed=await bcrypt.hash(password,12)
+  console.log(req.body);
+  
+  
+  const user= await User.findOne({_id:userId})
+  if(!user){
+    req.flash('err','something waint wrong')
+    return res.redirect('/login')
+
+  }
+  user.password= passwordHashed
+  user.resetToken=crypto.randomBytes(32).toString('hex')
+  user.tokenExpiraionDate=Date.now()
+  user.save().then((result)=>{
+  console.log(result);
+  res.redirect('/login')
+  
+  }).catch(err=>console.log(err));
+  
+
+}

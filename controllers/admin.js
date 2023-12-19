@@ -120,15 +120,5 @@ exports.postDeleteProducts = (req, res, next) => {
       res.redirect("/admin/products");
       console.log(result)})
     .catch((err) => console.log(err));
-  // Product.findById(productId)
-  //   .then((product) => {
-  //     product
-  //       .deleteOne()
-  //       .then((result) => {
-  //         console.log('product deleted');
-  //         res.redirect("/admin/products");
-  //       })
-  //       .catch((err) => console.log(err));
-  //   })
-  //   .catch((err) => console.log(err));
+
 };
