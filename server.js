@@ -43,6 +43,26 @@ app.use(express.static(path.join(__dirname, "public")));
 //   console.log('Session Object:', req.session);
 //   next();
 // });
+app.use((req,res,next)=>{
+  if(!req.user){
+    return next()
+  }
+  User.findById(req.user._id).then((user)=>{
+  if(!user){
+    return next()
+  }
+  req.user=user
+  
+  }).catch(err=>{
+    //it will not work  in side callback or then block
+    //this work for async try catch block
+   // throw new Error(err)
+   next(new Error(err))
+  
+  
+  });
+
+})
 
 app.use((req, res, next) => {
   res.locals.isLoggedIn = req.session.isLoggedIn;
@@ -53,8 +73,18 @@ app.use((req, res, next) => {
 app.use("/admin", adminRout);
 app.use(loginRout);
 app.use(shopRout);
-
+app.get('/500',errorController.get505)
 app.use(errorController.get404);
+app.use((error,req,res,next)=>{
+  //res.status(error.httpStatusCode).rende('/500','')
+  //res.redirect('/500')
+  res.status(error.httpStatusCode).rende('/500',{
+    doctitle:"server error",
+    path: "505",
+    isLoggedIn: req.session.isLoggedIn,
+  })
+
+})
 mongoose
   .connect(mongoEnv.url)
   .then((result) => {

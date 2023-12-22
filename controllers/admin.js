@@ -49,6 +49,7 @@ exports.postAddProucts = (req, res, next) => {
   }
 else{
   const product = new Product({
+    //_id:'65834db6469dfb6a86f66c10',
     title: title,
     price: price,
     description: description,
@@ -63,7 +64,14 @@ else{
       console.log("product add");
       res.redirect("/admin/products");
     })
-    .catch((err) => console.log(err));
+    .catch((err) =>{ console.log(err)
+    
+    //res.redirect('/500');
+   const  error=new Error(err)
+   error.httpStatusCode=500
+   return next(error)
+    
+    });
   }
 };
 exports.getEditProducts = (req, res, next) => {
