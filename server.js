@@ -27,7 +27,7 @@ app.set("view engine", "ejs");
 app.set("views", "view");
 app.use(
   session({
-    secret: "onlyme",
+    secret: mongoEnv.sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: store,
@@ -46,6 +46,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
   res.locals.isLoggedIn = req.session.isLoggedIn;
+  res.locals.userId=req.session.userId
  res.locals.csrfToken = req.csrfToken();
   next();
 });

@@ -9,6 +9,7 @@ const mongoEnv = {
   username: process.env.MONGO_USERNAME,
   password: process.env.MONGO_PASSWORD,
   database: process.env.MONGO_DATABASE,
+  sessionSecret:process.env.SESSION_SECRET,
 };
 
 module.exports = mongoEnv;

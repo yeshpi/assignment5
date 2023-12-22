@@ -1,17 +1,23 @@
 const Product = require("../models/product");
 const User= require('../models/users');
-
-
+const {validationResult}=require('express-validator');
 
 
 exports.getAddProducts = (req, res, next) => {
-
   
   res.render("admin/edit-product", {
     doctitle: "add product",
     path: "/admin/add-product",
     editing: false,
-    isLoggedIn:req.session.isLoggedIn
+    isLoggedIn:req.session.isLoggedIn,
+    userMessage:req.flash('err'),
+    errorPath:[],
+    userData:{
+      title:"",
+      price:"",
+      imageUrl:"",
+      description:""
+    }
   });
 };
 exports.postAddProucts = (req, res, next) => {
@@ -19,7 +25,29 @@ exports.postAddProucts = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-
+  const errors=validationResult(req).array()
+  if(!errors.length<=0){
+    console.log(errors);
+    
+    let errorMessage = errors.map((err) => err.msg).join(",");    
+    let errorpath=errors.map((err) => err.path).join(",");
+    req.flash('err',errorMessage)
+    return  res.render("admin/edit-product", {
+      doctitle: "add product",
+      path: "/admin/add-product",
+      editing: false,
+      isLoggedIn:req.session.isLoggedIn,
+      userMessage:req.flash('err'),
+      errorPath:errorpath,
+      userData:{
+        title:title,
+        price:price,
+        imageUrl:imageUrl,
+        description:description
+      }
+    });
+  }
+else{
   const product = new Product({
     title: title,
     price: price,
@@ -36,6 +64,7 @@ exports.postAddProucts = (req, res, next) => {
       res.redirect("/admin/products");
     })
     .catch((err) => console.log(err));
+  }
 };
 exports.getEditProducts = (req, res, next) => {
   const editMode = req.query.edit;
@@ -45,17 +74,31 @@ exports.getEditProducts = (req, res, next) => {
     return res.redirect("/");
   }
   const productId = req.params.productId;
+console.log(req.session.user._id,"uuuuu");
 
-  Product.findById(productId)
+  Product.findOne({_id:productId,userId:req.session.user._id})
     .then((products) => {
       console.log(products);
+      if(!products)
+      {
+        return res.redirect('/admin/add-product')
+      }
 
       res.render("admin/edit-product", {
         doctitle: "Edit product",
         path: "/admin/add-edit",
         editing: editMode,
         product: products,
-        isLoggedIn:req.session.isLoggedIn
+        isLoggedIn:req.session.isLoggedIn,
+        userMessage:req.flash('err'),
+      errorPath:[],
+      userData:{
+        productId:"",
+        title:"",
+        price:"",
+        imageUrl:"",
+        description:""
+      }
       });
     })
     .catch((err) => console.log(err));
@@ -69,7 +112,30 @@ exports.postEditProduct = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-  Product.findById(productId)
+  const errors=validationResult(req).array()
+  if(!errors.length<=0){
+    let errorMessage = errors.map((err) => err.msg).join(",");    
+    let errorpath=errors.map((err) => err.path).join(",");
+    req.flash('err',errorMessage)
+    return  res.render("admin/edit-product", {
+      doctitle: "edit product",
+      path: "/admin/add-product",
+      editing: true,
+      isLoggedIn:req.session.isLoggedIn,
+      userMessage:req.flash('err'),
+      errorPath:errorpath,
+      userData:{
+        productId:productId,
+        title:title,
+        price:price,
+        imageUrl:imageUrl,
+        description:description
+      }
+    });
+
+  }
+  else{
+  Product.findOne({_id:productId,userId:req.session.user._id})
     .then((product) => {
       product.title = title;
       product.price = price;
@@ -83,6 +149,7 @@ exports.postEditProduct = (req, res, next) => {
       res.redirect("/admin/products");
     })
     .catch((err) => console.log(err));
+  }
 };
 
 exports.getProducts = (req, res, next) => {
@@ -104,7 +171,7 @@ exports.postDeleteProducts = (req, res, next) => {
   const productId = req.body.productId;
   console.log('del',productId);
   
-  Product.findByIdAndDelete(productId)
+  Product.deleteOne({_id:productId,userId:req.session.user._id})
     .then((result) => {
       console.log(result);
       console.log("product deleted");

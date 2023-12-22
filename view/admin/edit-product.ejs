@@ -1,37 +1,56 @@
 <%- include('../includes/head.ejs')%>
-    <link rel="stylesheet", href="/css/forms.css">
-    <link rel="stylesheet", href="/css/product.css">
-    
-    
-</head>
+    <link rel="stylesheet" , href="/css/forms.css">
+    <link rel="stylesheet" , href="/css/product.css">
 
-<body>
-    <%- include('../includes/navigation.ejs')%>
-       <main>
-        <form class="product-form" action="/admin/<% if(editing) {%>edit-product<% } else { %>add-product<% } %>" method="POST">
-            <input type="hidden" value="<%= csrfToken %>" name="_csrf">
-            <div class="form-control">
-                <label for="title">Title</label>
-                <input type="text" name="title" value="<% if (editing) { %><%= product.title %> <% }%>" id="title">
-            </div>
-            <div class="form-control">
-                <label for="imageUrl">Image Url</label>
-                <input type="text" name="imageUrl" value="<% if (editing) { %><%= product.imageUrl %> <% }%>" id="imageUrl">
-            </div>
-            <div class="form-control">
-                <label for="price">price</label>
-                <input type="number" name="price" value=<% if (editing) { %><%= product.price %> <% }%> id="price">
-            </div>
-            <div class="form-control">
-                <label for="description">Description</label>
-                <textarea type="text" name="description" id="description" rows="5" id="title"><% if (editing) { %><%= product.description %> <% }%></textarea>
-            </div>
-            <% if(editing) { %>
-                <input  type="hidden" value="<%= product._id %>" name="productId">
-                
-            <%}   %>
 
-            <button type="submit"><% if(editing) {%>Update Product <%}else{%>Add Product<%}%></button>
-        </form>
-    </main>
-<%- include('../includes/end.ejs')%>
+    </head>
+
+    <body>
+        <%- include('../includes/navigation.ejs')%>
+            <main>
+                <%if(userMessage.length>0){%>
+                    <div class="user-message user-message--error">
+                        <%=userMessage %>
+                    </div>
+
+                    <%}%>
+                        <form class="product-form"
+                            action="/admin/<% if(editing) {%>edit-product<% } else { %>add-product<% } %>"
+                            method="POST" novalidate>
+                            <input type="hidden" value="<%= csrfToken %>" name="_csrf">
+                            <div class="form-control">
+                                <label for="title">Title</label>
+                                <input type="text" class="<%= errorPath.includes('title')?'invalid':''%>" name="title"
+                                    value="<% if (userMessage.length > 0 || !editing) { %><%= userData.title %><% } else{ %><%= product.title %><% } %>"
+                                    id="title">
+                            </div>
+                            <div class="form-control">
+                                <label for="imageUrl">Image Url</label>
+                                <input type="text" class="<%= errorPath.includes('imageUrl')?'invalid':''%>"
+                                    name="imageUrl"
+                                    value="<% if (userMessage.length > 0 || !editing) { %><%= userData.imageUrl %><% } else{ %><%= product.imageUrl %><% } %>"
+                                    id="imageUrl">
+                            </div>
+                            <div class="form-control">
+                                <label for="price">price</label>
+                                <input type="number" class="<%= errorPath.includes('price')?'invalid':''%>" name="price"
+                                    value="<% if (userMessage.length > 0 || !editing) { %><%= userData.price %><% } else{ %><%= product.price %><% } %>"
+                                    id="price">
+                            </div>
+                            <div class="form-control">
+                                <label for="description">Description</label>
+                                <textarea type="text" class="<%= errorPath.includes('description')?'invalid':''%>"
+                                    name="description" id="description" rows="5"
+                                    id="description"><% if (userMessage.length > 0 || !editing) { %><%= userData.description %><% } else{ %><%= product.description %><% } %></textarea>
+                            </div>
+                            <% if(editing) { %>
+                                <input type="hidden" value="<% if (userMessage.length > 0 || !editing) { %><%= userData.productId %><% } else{ %><%= product._id %><% } %>"
+                                 name="productId">
+                                <%} %>
+
+                                    <button type="submit">
+                                        <% if(editing) {%>Update Product <%}else{%>Add Product<%}%>
+                                    </button>
+                        </form>
+            </main>
+            <%- include('../includes/end.ejs')%>

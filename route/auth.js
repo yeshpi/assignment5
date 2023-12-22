@@ -9,8 +9,11 @@ const route = express.Router();
 route.get("/login", authController.getlogin);
 route.post(
   "/login",
-  body("email", "not valid email").isEmail(),
-  body("password", "to short password ").isLength({ min: 4 }),
+  body("email", "not valid email").isEmail().normalizeEmail().trim(),
+  body("password", "to short password ")
+    .isLength({ min: 4 })
+    .trim()
+    .isAlphanumeric(),
   authController.postlogin
 );
 route.post("/signout", authController.postSignout);
@@ -20,18 +23,20 @@ route.post(
   check("email")
     .isEmail()
     .withMessage("invalid email")
-    .custom((value, { req }) => {
+    .custom(async (value, { req }) => {
       //   if (value === "test8@test.com") {
       //     throw new Error("this email not valid");
       //   }
-      return User.findOne({ email: value }).then((user) => {
-        if (user) {
-          return Promise.reject("email exists");
-        }
-      });
-    }),
+      const user = await User.findOne({ email: value });
+      if (user) {
+        return Promise.reject("email exists");
+      }
+    })
+    .normalizeEmail()
+    .trim(),
   body("password", "password at list 4 chr and number")
     .isLength({ min: 4 })
+    .trim()
     .isAlphanumeric(),
   body("passwordConfirm").custom((value, { req }) => {
     if (value !== req.body.password) {
@@ -43,7 +48,18 @@ route.post(
 );
 route.get("/reset", authController.getPasswordReset);
 route.get("/reset/:tokenId", authController.getPasswordChange);
-route.post("/reset", authController.postPasswordReset);
-route.post("/new-password", authController.postChangePassword);
+route.post( "/reset",body('email','not valid email').isEmail().trim() , authController.postPasswordReset);
+route.post("/new-password",[
+  body("password", "password at list 4 chr and number")
+    .isLength({ min: 4 })
+    .trim()
+    .isAlphanumeric(),
+  body("passwordConfirm").custom((value, { req }) => {
+    if (value !== req.body.password) {
+      throw new Error("password do not match");
+    }
+    return true;
+  }),
+], authController.postChangePassword);
 
 module.exports = route;

@@ -14,7 +14,8 @@ exports.getProducts = (req, res, next) => {
         products: products,
         doctitle: "shop",
         path: "/products",
-        isLoggedIn: req.session.isLoggedIn,
+        
+        
         
       });
     })
@@ -121,12 +122,10 @@ exports.postCartItemDelete = (req, res, next) => {
 
   console.log("t");
   console.log(cartItemId);
+  const userId = req.session.user._id;
 
-  console.log(req.user);
-  const userId = req.user._id;
-
-  req.user
-    .updateOne({ $pull: { "cart.items": { _id: cartItemId } } })
+ 
+  User.updateOne({_id:userId},{ $pull: { "cart.items": { _id: cartItemId } } })
     .then((result) => {
       console.log("Cart item deleted:", result);
       res.redirect("/cart");
@@ -137,6 +136,8 @@ exports.postCartItemDelete = (req, res, next) => {
 };
 
 exports.postOrder = (req, res, next) => {
+  console.log(req.session.user);
+  
   User.findById(req.session.user._id)
     .populate("cart.items.productId")
     .then((user) => {
@@ -146,12 +147,13 @@ exports.postOrder = (req, res, next) => {
           quantity: item.quantity,
         };
       });
+console.log(req.session.user.name,"bnbn");
 
       const order = new Order({
         products: products,
         user: {
-          name: req.session.user.name,
-          userId: req.session.user._id,
+          name: user.name,
+          userId: user._id,
         },
       });
 
