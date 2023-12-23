@@ -1,0 +1,51 @@
+<%- include('../includes/head.ejs')%>
+<link rel="stylesheet" href="/css/cart.css">
+</head>
+    <body>
+       <%- include('../includes/navigation.ejs')%> 
+        <main>
+            <% if (products.length > 0) { %>
+                <ul class="cart__item-list">
+                    <% products.forEach(p => { %>
+                        <li class="cart__item">
+                            <h1><%= p.productId.title %></h1>
+                            <h2>Quantity: <%= p.quantity %></h2>
+                            <!-- <form action="/cart-delete-item" method="POST">
+                                <input type="hidden" value="<%= p._id %>" name="productId">
+                                <input type="hidden" value="<%= csrfToken %>" name="_csrf">
+                                <button class="btn danger" type="submit">Delete</button>
+                            </form> -->
+                        </li>
+                    <% }) %>
+                </ul>
+                <div class="centered">
+                <!-- <form action="/create-order" method="post">
+                    <input type="hidden" value="<%= csrfToken %>" name="_csrf">
+                    <button class="btn" type="submit">Order Now</button>
+                </form> -->
+                <h2>Total:<%=totalPrice%></h2>
+            </div>
+            <div class="centered"><button class="btn" id="order-btn">Order new</button>
+                <script src="https://js.stripe.com/v3/" async></script>
+                <script>
+                    console.log('jjjj')
+                    var stripe = Stripe('pk_test_51OQUoKIZZkpC98UB2AqE5F7PxcyN22efgip94daOD2Dn6eVBVo6KGlO2AESJIoTCFzH43eDnTYvV4jGSomnG9nYK00tyUpE90j');
+                    var orderBtn=document.getElementById('order-btn');
+                    orderBtn.addEventListener('click',function(){
+                        stripe.redirectToCheckout({
+                            sessionId:'<%=sessionId%>'    
+
+                        })
+
+                    })
+
+                </script>
+            
+            </div>
+            <% } else { %>
+                <h1>No Products in Cart!</h1>
+            <% } %>
+
+        </main>
+<%- include('../includes/end.ejs')%>
+  

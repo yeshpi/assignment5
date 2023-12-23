@@ -1,69 +1,72 @@
 const Product = require("../models/product");
 const Order = require("../models/order");
 const User = require("../models/users");
+const mongoEnv = require("../env/mongoEnv");
+
 const fs = require("fs");
 const path = require("path");
-
+const stripe = require("stripe")(mongoEnv.stripeSecret);
 
 const PDFDocment = require("pdfkit");
+const product = require("../models/product");
 
 exports.getProducts = (req, res, next) => {
-  const page= +req.query.page||1;
-  const itemPerpage=2
+  const page = +req.query.page || 1;
+  const itemPerpage = 2;
   // console.log(req.session);
   if (req.session.isLoggedIn) {
     console.log(req.session.isLoggedIn);
   }
-  Product.countDocuments().then(count=>{
-  Product.find()
-  .skip((page-1)*itemPerpage)
-    .limit(itemPerpage)
-    .then((products) => {
-      res.render("shop/product-list", {
-        products: products,
-        doctitle: "shop",
-        path: "/products",
-        count:count,
-        currentPage:page,
-        hasNextPage:itemPerpage*page < count,
-        hasPreviousPage:page >1,
-        nextPage:page +1, 
-        previousPage:page-1 ,
-        lastPage:Math.ceil(count/itemPerpage)  
-      });
+  Product.countDocuments()
+    .then((count) => {
+      Product.find()
+        .skip((page - 1) * itemPerpage)
+        .limit(itemPerpage)
+        .then((products) => {
+          res.render("shop/product-list", {
+            products: products,
+            doctitle: "shop",
+            path: "/products",
+            count: count,
+            currentPage: page,
+            hasNextPage: itemPerpage * page < count,
+            hasPreviousPage: page > 1,
+            nextPage: page + 1,
+            previousPage: page - 1,
+            lastPage: Math.ceil(count / itemPerpage),
+          });
+        })
+        .catch((err) => console.log(err));
     })
-    .catch((err) => console.log(err));
-}).catch(err=>err)
+    .catch((err) => err);
 };
 exports.getIndex = (req, res, next) => {
   //cover to string and if for / return 1 page is nan
-  const page= +req.query.page||1;
-  const itemPerpage=2
-  console.log(page,"xxxxxxxxx");
-  Product.countDocuments().then(count=>{
-    Product.find()
-    .skip((page-1)*itemPerpage)
-    .limit(itemPerpage)
-    .then((products) => {
-      res.render("shop/index", {
-        products: products,
-        doctitle: "shop",
-        path: "/",
-        count:count,
-        currentPage:page,
-        hasNextPage:itemPerpage*page < count,
-        hasPreviousPage:page >1,
-        nextPage:page +1, 
-        previousPage:page-1 ,
-        lastPage:Math.ceil(count/itemPerpage)    
-      });
+  const page = +req.query.page || 1;
+  const itemPerpage = 2;
+  console.log(page, "xxxxxxxxx");
+  Product.countDocuments()
+    .then((count) => {
+      Product.find()
+        .skip((page - 1) * itemPerpage)
+        .limit(itemPerpage)
+        .then((products) => {
+          res.render("shop/index", {
+            products: products,
+            doctitle: "shop",
+            path: "/",
+            count: count,
+            currentPage: page,
+            hasNextPage: itemPerpage * page < count,
+            hasPreviousPage: page > 1,
+            nextPage: page + 1,
+            previousPage: page - 1,
+            lastPage: Math.ceil(count / itemPerpage),
+          });
+        })
+        .catch((err) => console.log(err));
     })
     .catch((err) => console.log(err));
-
-  }).catch(err=>console.log(err));
-  
-  
-  
 };
 
 exports.getProduct = (req, res, next) => {
@@ -229,14 +232,14 @@ exports.getInvoice = async (req, res, next) => {
     // pdfDoc.fontSize(30).text('----------------------------')
     let totalPrice = 0;
     order.products.forEach((product) => {
-      totalPrice += product.quantity *product.product.price;
+      totalPrice += product.quantity * product.product.price;
       pdfDoc
         .fontSize(14)
         .text(
           product.product.title +
             "----------" +
             "X" +
-           product.quantity +
+            product.quantity +
             "---" +
             product.quantity * product.product.price
         );
@@ -257,4 +260,99 @@ exports.getInvoice = async (req, res, next) => {
   } else {
     return next(new Error("order not found"));
   }
+};
+exports.getCheckOut = (req, res, next) => {
+  if (req.session.isLoggedIn) {
+    let products;
+    let totalPrice = 0;
+    User.findById(req.session.user._id)
+      .populate("cart.items.productId")
+
+      .then((result) => {
+        console.log(result.cart.items);
+        products = result.cart.items;
+        //let totalPrice=0
+        products.forEach((product) => {
+          totalPrice += product.quantity * product.productId.price;
+        });
+        return stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          line_items: products.map((p) => {
+            return {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: p.productId.title,
+                  description: p.productId.description,
+                   },
+                unit_amount: p.productId.price*100, // amount in cents
+              },
+              quantity: p.quantity,
+            }
+          }),
+          // line_items: [
+          //   {
+          //     price_data: {
+          //       currency: 'usd',
+          //       product_data: {
+          //         name: 'Your Product Name',
+          //         description: 'Your Product Description',
+          //         // ... other product data
+          //       },
+          //       unit_amount: 1000, // amount in cents
+          //     },
+          //     quantity: 1,
+          //   },
+          // ],
+          mode: 'payment',
+          success_url:req.protocol +'://'+ req.get('host')+'/checkout/success',
+          cancel_url:req.protocol +'://'+ req.get('host')+'/checkout/cancel'
+        });
+      })
+      .then((session) => {
+        res.render("shop/checkout", {
+          products: products,
+          doctitle: "checkout",
+          path: "/checkout",
+          totalPrice: totalPrice,
+          sessionId: session.id,
+        });
+      })
+      .catch((err) => console.log(err));
+  } else {
+    res.redirect("/login");
+  }
+};
+exports.getCheckoutSuccess = (req, res, next) => {
+  console.log(req.session.user);
+
+  User.findById(req.session.user._id)
+    .populate("cart.items.productId")
+    .then((user) => {
+      const products = user.cart.items.map((item) => {
+        return {
+          product: { ...item.productId._doc }, // include all product details
+          quantity: item.quantity,
+        };
+      });
+      console.log(req.session.user.name, "bnbn");
+
+      const order = new Order({
+        products: products,
+        user: {
+          name: user.name,
+          userId: user._id,
+        },
+      });
+
+      return order
+        .save()
+        .then((result) => {
+          console.log("Order created:", result);
+          user.cart.items = [];
+          user.save();
+          res.redirect("/orders");
+        })
+        .catch((err) => console.error(err));
+    });
 };
