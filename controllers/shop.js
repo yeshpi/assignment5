@@ -1,10 +1,14 @@
 const Product = require("../models/product");
 const Order = require("../models/order");
 const User = require("../models/users");
+const fs = require("fs");
+const path = require("path");
 
+
+const PDFDocment = require("pdfkit");
 
 exports.getProducts = (req, res, next) => {
- // console.log(req.session);
+  // console.log(req.session);
   if (req.session.isLoggedIn) {
     console.log(req.session.isLoggedIn);
   }
@@ -14,21 +18,17 @@ exports.getProducts = (req, res, next) => {
         products: products,
         doctitle: "shop",
         path: "/products",
-        
-        
-        
       });
     })
     .catch((err) => console.log(err));
 };
 exports.getIndex = (req, res, next) => {
- 
   Product.find()
     .then((products) => {
       res.render("shop/index", {
         products: products,
         doctitle: "shop",
-        path: "/",       
+        path: "/",
       });
     })
     .catch((err) => console.log(err));
@@ -50,28 +50,24 @@ exports.getProduct = (req, res, next) => {
 };
 
 exports.getCart = (req, res, next) => {
-  if(req.session.isLoggedIn){
+  if (req.session.isLoggedIn) {
     User.findById(req.session.user._id)
-    .populate("cart.items.productId")
+      .populate("cart.items.productId")
 
-    .then((result) => {
-      console.log(result.cart.items);
-      const products = result.cart.items;
-  res.render("shop/cart", {
-    products: products,
-    doctitle: "Your Cart",
-    path: "/cart",
-    isLoggedIn: req.session.isLoggedIn,
-  });
-    })
-    .catch((err) => console.log(err));
-
+      .then((result) => {
+        console.log(result.cart.items);
+        const products = result.cart.items;
+        res.render("shop/cart", {
+          products: products,
+          doctitle: "Your Cart",
+          path: "/cart",
+          isLoggedIn: req.session.isLoggedIn,
+        });
+      })
+      .catch((err) => console.log(err));
+  } else {
+    res.redirect("/login");
   }
-  else{
-    res.redirect('/login')
-  }
- 
-  
 };
 exports.postCart = (req, res, next) => {
   const productId = req.body.productId;
@@ -97,25 +93,22 @@ exports.postCart = (req, res, next) => {
 //   });
 // };
 exports.getOrders = (req, res, next) => {
-  if(req.session.isLoggedIn){
+  if (req.session.isLoggedIn) {
     Order.find({ "user.userId": req.session.user._id })
-    .select("products")
-    .then((orders) => {
-      console.log(orders);
-      res.render("shop/orders", {
-        orders: orders,
-        doctitle: "Your Order",
-        path: "/orders",
-        isLoggedIn: req.session.isLoggedIn,
-      });
-    })
-    .catch((err) => console.log(err));
-
+      .select("products")
+      .then((orders) => {
+        console.log(orders);
+        res.render("shop/orders", {
+          orders: orders,
+          doctitle: "Your Order",
+          path: "/orders",
+          isLoggedIn: req.session.isLoggedIn,
+        });
+      })
+      .catch((err) => console.log(err));
+  } else {
+    res.redirect("/login");
   }
-  else{
-    res.redirect('/login')
-  }
- 
 };
 exports.postCartItemDelete = (req, res, next) => {
   const cartItemId = req.body.productId;
@@ -124,8 +117,10 @@ exports.postCartItemDelete = (req, res, next) => {
   console.log(cartItemId);
   const userId = req.session.user._id;
 
- 
-  User.updateOne({_id:userId},{ $pull: { "cart.items": { _id: cartItemId } } })
+  User.updateOne(
+    { _id: userId },
+    { $pull: { "cart.items": { _id: cartItemId } } }
+  )
     .then((result) => {
       console.log("Cart item deleted:", result);
       res.redirect("/cart");
@@ -137,7 +132,7 @@ exports.postCartItemDelete = (req, res, next) => {
 
 exports.postOrder = (req, res, next) => {
   console.log(req.session.user);
-  
+
   User.findById(req.session.user._id)
     .populate("cart.items.productId")
     .then((user) => {
@@ -147,7 +142,7 @@ exports.postOrder = (req, res, next) => {
           quantity: item.quantity,
         };
       });
-console.log(req.session.user.name,"bnbn");
+      console.log(req.session.user.name, "bnbn");
 
       const order = new Order({
         products: products,
@@ -157,13 +152,77 @@ console.log(req.session.user.name,"bnbn");
         },
       });
 
-      return order.save().then((result) => {
-        console.log("Order created:", result);
-        user.cart.items = [];
-        user.save();
-        res.redirect("/orders");
-      })
-      .catch((err) => console.error(err));
-    })
-    
+      return order
+        .save()
+        .then((result) => {
+          console.log("Order created:", result);
+          user.cart.items = [];
+          user.save();
+          res.redirect("/orders");
+        })
+        .catch((err) => console.error(err));
+    });
+};
+
+exports.getInvoice = async (req, res, next) => {
+  const orderId = req.params.orderId;
+  const order = await Order.findOne({
+    _id: orderId,
+    "user.userId": req.session.userId,
+  });
+  console.log(order);
+  const invoiceName = "invoice-" + orderId + ".pdf";
+  //  const fileLocation=path.join('data','invoice','invoice.pdf')
+  const fileLocation = path.join("data", "invoice", invoiceName);
+  if (order) {
+    //  fs.readFile(fileLocation,(err,data)=>{
+    //   if(err){
+    //    return next(err)
+    //   }
+    //   res.setHeader('Content-Type','application/pdf')
+    //   res.setHeader('Content-Disposition','inline;filename="'+invoiceName+'"')
+    //  // res.setHeader('Content-Disposition','attachment;filename="'+invoiceName+'"')
+    //   res.send(data)
+    //  })
+    const pdfDoc = new PDFDocment();
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      'inline;filename="' + invoiceName + '"'
+    );
+    pdfDoc.pipe(fs.createWriteStream(fileLocation));
+    pdfDoc.pipe(res);
+
+    pdfDoc.fontSize(30).text("Invoice", { underline: true });
+    // pdfDoc.fontSize(30).text('----------------------------')
+    let totalPrice = 0;
+    order.products.forEach((product) => {
+      totalPrice += product.quantity *product.product.price;
+      pdfDoc
+        .fontSize(14)
+        .text(
+          product.product.title +
+            "----------" +
+            "X" +
+           product.quantity +
+            "---" +
+            product.quantity * product.product.price
+        );
+    });
+
+    pdfDoc.fontSize(14).text("Total Price --------------------" + totalPrice);
+
+    pdfDoc.end();
+
+    //*************for beiger file stream */
+    //  const file=fs.createReadStream(fileLocation)
+    //   res.setHeader('Content-Type','application/pdf')
+    //  res.setHeader(
+    //   'Content-Disposition',
+    //   'inline;filename="'+invoiceName+'"'
+    //   );
+    //   file.pipe(res)
+  } else {
+    return next(new Error("order not found"));
+  }
 };

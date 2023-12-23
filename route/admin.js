@@ -15,8 +15,7 @@ route.post(
   isAuth,
   [
     check("title", "empty title").isString().trim().isLength({ min: 3 }),
-    body("price", "empty price or only numbers").isFloat(),
-    body("imageUrl", "empty url or eror").isURL(),
+    body("price", "empty price or only numbers").isFloat(),  
     body("description", "description at list 10 to 200 words ")
       .isLength({ min: 10, max: 200 })
       .trim(),
@@ -30,7 +29,7 @@ route.post(
   [
     check("title", "empty title").isString().trim().isLength({ min: 3 }),
     body("price", "empty price or only numbers").isFloat(),
-    body("imageUrl", "empty url or eror").isURL(),
+    
     body("description", "description at list 10 to 200 words ")
       .isLength({ min: 10, max: 200 })
       .trim(),

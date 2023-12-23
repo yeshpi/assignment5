@@ -1,6 +1,7 @@
 const Product = require("../models/product");
 const User= require('../models/users');
 const {validationResult}=require('express-validator');
+const deleteFile=require('../util/file');
 
 
 exports.getAddProducts = (req, res, next) => {
@@ -22,9 +23,29 @@ exports.getAddProducts = (req, res, next) => {
 };
 exports.postAddProucts = (req, res, next) => {
   const title = req.body.title;
-  const imageUrl = req.body.imageUrl;
+  const image = req.file;
   const price = req.body.price;
   const description = req.body.description;
+
+  console.log(image);
+  if(!image){
+    req.flash('err',"please select .png .jpg or .jpeg file format")
+    return  res.render("admin/edit-product", {
+      doctitle: "add product",
+      path: "/admin/add-product",
+      editing: false,
+      isLoggedIn:req.session.isLoggedIn,
+      userMessage:req.flash('err'),
+      errorPath:['image'],
+      userData:{
+        title:title,
+        price:price,
+        imageUrl:null,
+        description:description
+      }
+    });
+  }
+  
   const errors=validationResult(req).array()
   if(!errors.length<=0){
     console.log(errors);
@@ -42,7 +63,7 @@ exports.postAddProucts = (req, res, next) => {
       userData:{
         title:title,
         price:price,
-        imageUrl:imageUrl,
+         imageUrl:null,
         description:description
       }
     });
@@ -53,7 +74,7 @@ else{
     title: title,
     price: price,
     description: description,
-    imageUrl: imageUrl,
+    imageUrl: image.path,
     //userId:req.user._id    works too 
     userId:req.session.user._id
   });
@@ -67,9 +88,9 @@ else{
     .catch((err) =>{ console.log(err)
     
     //res.redirect('/500');
-   const  error=new Error(err)
-   error.httpStatusCode=500
-   return next(error)
+   //const  error=new Error(err)
+  //  error.httpStatusCode=500
+   //return next(error)
     
     });
   }
@@ -117,9 +138,10 @@ exports.postEditProduct = (req, res, next) => {
 
   const productId = req.body.productId;
   const title = req.body.title;
-  const imageUrl = req.body.imageUrl;
+  const image = req.file;
   const price = req.body.price;
   const description = req.body.description;
+ 
   const errors=validationResult(req).array()
   if(!errors.length<=0){
     let errorMessage = errors.map((err) => err.msg).join(",");    
@@ -136,7 +158,7 @@ exports.postEditProduct = (req, res, next) => {
         productId:productId,
         title:title,
         price:price,
-        imageUrl:imageUrl,
+        imageUrl:null,
         description:description
       }
     });
@@ -148,7 +170,12 @@ exports.postEditProduct = (req, res, next) => {
       product.title = title;
       product.price = price;
       product.description = description;
-      product.imageUrl = imageUrl;
+      if(image){
+        deleteFile.deleteFile(product.imageUrl)
+        product.imageUrl = image.path;
+
+      }
+      
       product.save();
     })
     .then((result) => {
@@ -178,22 +205,28 @@ exports.getProducts = (req, res, next) => {
 exports.postDeleteProducts = (req, res, next) => {
   const productId = req.body.productId;
   console.log('del',productId);
-  
-  Product.deleteOne({_id:productId,userId:req.session.user._id})
-    .then((result) => {
-      console.log(result);
-      console.log("product deleted");
-      
-      return User.updateMany(        
-        { 'cart.items.productId': productId },
-        { $pull: { 'cart.items': { productId: productId } } }
-      );
-     
-    }).then(result=>{
-      console.log('cart');
-      
-      res.redirect("/admin/products");
-      console.log(result)})
-    .catch((err) => console.log(err));
 
+  Product.findById(productId).then((product)=>{
+  console.log(product);
+  Product.deleteOne({_id:productId,userId:req.session.user._id})
+  .then((result) => {
+    console.log(result);
+    console.log("product deleted");
+    deleteFile.deleteFile(product.imageUrl)
+    return User.updateMany(        
+      { 'cart.items.productId': productId },
+      { $pull: { 'cart.items': { productId: productId } } }
+    );
+   
+  }).then(result=>{
+    console.log('cart');
+    
+    res.redirect("/admin/products");
+    console.log(result)})
+  .catch((err) => console.log(err));
+
+  
+  }).catch(err=>console.log(err));
+  
+ 
 };
