@@ -8,30 +8,62 @@ const path = require("path");
 const PDFDocment = require("pdfkit");
 
 exports.getProducts = (req, res, next) => {
+  const page= +req.query.page||1;
+  const itemPerpage=2
   // console.log(req.session);
   if (req.session.isLoggedIn) {
     console.log(req.session.isLoggedIn);
   }
+  Product.countDocuments().then(count=>{
   Product.find()
+  .skip((page-1)*itemPerpage)
+    .limit(itemPerpage)
     .then((products) => {
       res.render("shop/product-list", {
         products: products,
         doctitle: "shop",
         path: "/products",
+        count:count,
+        currentPage:page,
+        hasNextPage:itemPerpage*page < count,
+        hasPreviousPage:page >1,
+        nextPage:page +1, 
+        previousPage:page-1 ,
+        lastPage:Math.ceil(count/itemPerpage)  
       });
     })
     .catch((err) => console.log(err));
+}).catch(err=>err)
 };
 exports.getIndex = (req, res, next) => {
-  Product.find()
+  //cover to string and if for / return 1 page is nan
+  const page= +req.query.page||1;
+  const itemPerpage=2
+  console.log(page,"xxxxxxxxx");
+  Product.countDocuments().then(count=>{
+    Product.find()
+    .skip((page-1)*itemPerpage)
+    .limit(itemPerpage)
     .then((products) => {
       res.render("shop/index", {
         products: products,
         doctitle: "shop",
         path: "/",
+        count:count,
+        currentPage:page,
+        hasNextPage:itemPerpage*page < count,
+        hasPreviousPage:page >1,
+        nextPage:page +1, 
+        previousPage:page-1 ,
+        lastPage:Math.ceil(count/itemPerpage)    
       });
     })
     .catch((err) => console.log(err));
+
+  }).catch(err=>console.log(err));
+  
+  
+  
 };
 
 exports.getProduct = (req, res, next) => {

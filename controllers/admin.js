@@ -188,19 +188,31 @@ exports.postEditProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
+  const page= +req.query.page||1;
+  const itemPerpage=8
+  Product.countDocuments({userId:req.session.user._id}).then(count=>{
   Product.find({userId:req.session.user._id})
   // .select('title price  -_id') select what to get from product object no all info
   // .populate('userId','name email -_id') to fill the user related info with selected info
+  .skip((page-1)*itemPerpage)
+  .limit(itemPerpage)
     .then((products) => {
       console.log(products);
       res.render("admin/products", {
         products: products,
         doctitle: "Admin Products",
         path: "/admin/products",
-        isLoggedIn:req.session.isLoggedIn
+        isLoggedIn:req.session.isLoggedIn,
+        count:count,
+        currentPage:page,
+        hasNextPage:itemPerpage*page < count,
+        hasPreviousPage:page >1,
+        nextPage:page +1, 
+        previousPage:page-1 ,
+        lastPage:Math.ceil(count/itemPerpage)  
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => console.log(err));}).catch(err=>err)
 };
 exports.postDeleteProducts = (req, res, next) => {
   const productId = req.body.productId;
