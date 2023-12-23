@@ -67,7 +67,7 @@ app.use(csrfProtection);
 app.use(flash());
 
 app.use((req, res, next) => {
-  console.log('Session Object:', req.session);
+  //console.log('Session Object:', req.session);
   next();
 });
 app.use((req,res,next)=>{

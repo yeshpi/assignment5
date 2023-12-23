@@ -29,6 +29,13 @@
                             <button class="btn" type="submit">Delete</button>
                         </form>                            
                         </div>
+                        <div class="card__actions">                            
+                        
+                            <input type="hidden" value="<%= csrfToken %>" name="_csrf">
+                            <input type="hidden" value="<%= product._id %>" name="productId">
+                            <button class="btn" type="button" onclick="deleteProduct(this)">Delete</button>
+                            
+                        </div>
                     </article>
                 <%}%>
             </div>
