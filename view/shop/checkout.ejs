@@ -25,8 +25,8 @@
                 </form> -->
                 <h2>Total:<%=totalPrice%></h2>
             </div>
-            <div class="centered"><button class="btn" id="order-btn">Order new</button>
-                <script src="https://js.stripe.com/v3/" async></script>
+            <div class="centered"><button class="btn" id="order-btn" data-session-id="<%= sessionId %>">Order new</button>
+                <!-- <script src="https://js.stripe.com/v3/" async></script>
                 <script>
                     console.log('jjjj')
                     var stripe = Stripe('pk_test_51OQUoKIZZkpC98UB2AqE5F7PxcyN22efgip94daOD2Dn6eVBVo6KGlO2AESJIoTCFzH43eDnTYvV4jGSomnG9nYK00tyUpE90j');
@@ -39,7 +39,7 @@
 
                     })
 
-                </script>
+                </script> -->
             
             </div>
             <% } else { %>
@@ -47,5 +47,8 @@
             <% } %>
 
         </main>
+        <!-- <script>
+            var sessionIdx = '<%=sessionId%>';
+          </script> -->
 <%- include('../includes/end.ejs')%>
   
